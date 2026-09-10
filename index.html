@@ -1,0 +1,591 @@
+"<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Súčtové trojuholníky</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(224, 231, 255, 0.5) 50%, rgba(220, 252, 231, 0.5) 100%);
+            min-height: 100vh;
+        }
+
+        /* Custom cell styles */
+        .pyramid-cell {
+            width: 76px;
+            height: 76px;
+            border: 3px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            position: relative;
+            user-select: none;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Soft blue outline for selected cell */
+        .pyramid-cell.selected {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.45);
+            z-index: 10;
+        }
+
+        /* Soft pastel cell backgrounds with ~50% opacity */
+        .bg-cell-white { background-color: rgba(255, 255, 255, 0.85); }
+        .bg-cell-gray  { background-color: rgba(156, 163, 175, 0.5); }
+        .bg-cell-blue  { background-color: rgba(96, 165, 250, 0.5); }
+        .bg-cell-green { background-color: rgba(74, 222, 128, 0.5); }
+        .bg-cell-red   { background-color: rgba(248, 113, 113, 0.5); }
+
+        /* Text styling classes */
+        .text-cell-normal { color: #000000; }
+        .text-cell-red { color: #dc2626; }
+        .font-cell-bold { font-weight: 800; }
+
+        /* Number table styling */
+        .num-btn {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid #cbd5e1;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+        .num-btn:hover {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border-color: #2563eb;
+            transform: scale(1.08);
+        }
+        .num-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Custom toggle switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #2563eb;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #2563eb;
+        }
+
+        /* Mode Selector Button Styling */
+        .mode-btn {
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+            transition: all 0.15s ease;
+            border: 1px solid #cbd5e1;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #334155;
+        }
+        .mode-btn:hover {
+            background-color: #f1f5f9;
+        }
+        .mode-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-color: #1d4ed8;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col backdrop-blur-[2px]">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-sm py-4 px-6 mb-6 sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto flex flex-col xl:flex-row items-center justify-between gap-4">
+            <!-- App Title -->
+            <div class="text-center xl:text-left flex-1">
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center xl:justify-start gap-3">
+                    <i class="fa-solid fa-shapes text-blue-600"></i>
+                    Súčtové trojuholníky
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Interaktívna matematika s možnosťou automatického sčítania</p>
+            </div>
+
+            <!-- Header Right Controls: Mode Options & Auto-Addition Toggle -->
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                
+                <!-- Pyramid Mode Selection Buttons -->
+                <div class="flex items-center bg-slate-100/90 p-1.5 rounded-xl border border-slate-200 shadow-inner gap-1">
+                    <button id="btnMode3" class="mode-btn active" onclick="setPyramidMode('3-2-1')">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Základná (3)
+                    </button>
+                    <button id="btnMode4" class="mode-btn" onclick="setPyramidMode('4-3-2-1')">
+                        <i class="fa-solid fa-layer-group"></i> Zväčšená (4)
+                    </button>
+                    <button id="btnModeBaby2" class="mode-btn" onclick="setPyramidMode('baby-2-1')">
+                        <i class="fa-solid fa-baby"></i> Baby (2)
+                    </button>
+                    <button id="btnModeBaby3" class="mode-btn" onclick="setPyramidMode('baby-3-2-1')">
+                        <i class="fa-solid fa-baby"></i> Baby (3)
+                    </button>
+                </div>
+
+                <!-- Auto-Addition Toggle -->
+                <div class="flex items-center bg-slate-100/90 p-2.5 rounded-xl border border-slate-200 shadow-inner">
+                    <label for="autoAddToggle" class="flex items-center cursor-pointer gap-2.5 select-none">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-calculator text-blue-600"></i>
+                            Automatické sčítanie
+                        </span>
+                        <div class="relative inline-block w-11 align-middle transition duration-200 ease-in">
+                            <input type="checkbox" id="autoAddToggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in shadow"/>
+                            <label for="autoAddToggle" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer transition-colors duration-200"></label>
+                        </div>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 flex-1 w-full pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: Number Selection Table -->
+            <section class="lg:col-span-5 bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-md flex flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-4">
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-table-cells text-blue-600"></i>
+                        <span id="numberGridTitle">Výber čísla (0 – 100)</span>
+                    </h2>
+                    <button id="btnClearValue" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-eraser text-slate-500"></i> Vymazať číslo
+                    </button>
+                </div>
+
+                <!-- Number Table Container -->
+                <div class="inline-block p-3 bg-slate-50/80 border border-slate-200 rounded-xl shadow-inner">
+                    <!-- Special Row for '0' (Above number 10) -->
+                    <div class="grid grid-cols-10 gap-1 mb-1">
+                        <div class="col-span-9"></div>
+                        <!-- Number 0 placed above number 10 (column 10) -->
+                        <button class="num-btn bg-amber-100/80 border-amber-300 font-bold text-amber-900 hover:bg-amber-500 hover:text-white" data-num="0">0</button>
+                    </div>
+
+                    <!-- Dynamic Grid for Numbers -->
+                    <div id="numberGrid" class="grid grid-cols-10 gap-1">
+                        <!-- JS generated buttons -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- CENTER COLUMN: Addition Pyramid Display -->
+            <section class="lg:col-span-4 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-md flex flex-col items-center justify-center min-h-[440px]">
+                <div class="text-center mb-6">
+                    <span id="selectedCellInfo" class="text-xs font-semibold px-3 py-1.5 bg-blue-50/90 text-blue-700 rounded-full border border-blue-200/80 inline-flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-hand-pointer"></i> Kliknite na políčko v pyramíde
+                    </span>
+                </div>
+
+                <!-- PYRAMID DYNAMIC CONTAINER -->
+                <div id="pyramidContainer" class="flex flex-col items-center gap-2 my-auto py-4">
+                    <!-- Dynamic Pyramid Cells rendered via JS -->
+                </div>
+
+                <div class="mt-6 flex gap-3 w-full justify-center">
+                    <button id="btnResetPyramid" class="text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-4 py-2 rounded-xl border border-rose-200 transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-rotate-left"></i> Vynulovať pyramídu
+                    </button>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Formatting & Tools Panel -->
+            <section class="lg:col-span-3 bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-md flex flex-col gap-5">
+                
+                <!-- Background Color Palette (Soft ~50% transparency shades) -->
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-palette text-blue-600"></i>
+                        Farba pozadia štvorca
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button class="bg-color-btn flex items-center gap-2.5 px-3 py-2 border rounded-xl hover:shadow-md transition text-xs font-semibold" data-color="gray">
+                            <span class="w-5 h-5 rounded-md border border-slate-400 inline-block shadow-sm" style="background-color: rgba(156, 163, 175, 0.5);"></span>
+                            Sivá
+                        </button>
+                        <button class="bg-color-btn flex items-center gap-2.5 px-3 py-2 border rounded-xl hover:shadow-md transition text-xs font-semibold" data-color="blue">
+                            <span class="w-5 h-5 rounded-md border border-blue-400 inline-block shadow-sm" style="background-color: rgba(96, 165, 250, 0.5);"></span>
+                            Modrá
+                        </button>
+                        <button class="bg-color-btn flex items-center gap-2.5 px-3 py-2 border rounded-xl hover:shadow-md transition text-xs font-semibold" data-color="green">
+                            <span class="w-5 h-5 rounded-md border border-green-400 inline-block shadow-sm" style="background-color: rgba(74, 222, 128, 0.5);"></span>
+                            Zelená
+                        </button>
+                        <button class="bg-color-btn flex items-center gap-2.5 px-3 py-2 border rounded-xl hover:shadow-md transition text-xs font-semibold" data-color="red">
+                            <span class="w-5 h-5 rounded-md border border-red-400 inline-block shadow-sm" style="background-color: rgba(248, 113, 113, 0.5);"></span>
+                            Červená
+                        </button>
+                        <button class="bg-color-btn col-span-2 flex items-center justify-center gap-2 px-3 py-2 border border-slate-300 rounded-xl hover:bg-slate-50 transition text-xs font-semibold text-slate-700" data-color="white">
+                            <span class="w-4 h-4 rounded-md bg-white border border-slate-300 inline-block"></span>
+                            Bez farby (Biela)
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-200/80"/>
+
+                <!-- Text Styling Options -->
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-font text-blue-600"></i>
+                        Zvýraznenie čísla
+                    </h3>
+                    <div class="flex gap-2">
+                        <!-- Red Text Toggle -->
+                        <button id="btnTextRed" class="flex-1 py-2.5 px-3 border border-slate-300 rounded-xl hover:bg-red-50 transition flex items-center justify-center gap-1.5 text-xs font-bold text-red-600">
+                            <i class="fa-solid fa-droplet"></i> Červené
+                        </button>
+
+                        <!-- Bold Text Toggle -->
+                        <button id="btnTextBold" class="flex-1 py-2.5 px-3 border border-slate-300 rounded-xl hover:bg-slate-100 transition flex items-center justify-center gap-1.5 text-xs font-black text-slate-900">
+                            <i class="fa-solid fa-bold"></i> Tučné (Bold)
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-200/80"/>
+
+                <!-- Instructions / Help Box -->
+                <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3.5 text-xs text-blue-900 leading-relaxed shadow-sm">
+                    <p class="font-bold mb-1 flex items-center gap-1 text-blue-950">
+                        <i class="fa-solid fa-circle-info text-blue-600"></i> Návod na použitie:
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1 text-blue-800">
+                        <li>Vyberte režim (Štandard, Zväčšená, Baby verzia).</li>
+                        <li>Kliknite na štvorec v pyramíde.</li>
+                        <li>Zvoľte číslo z tabuľky vľavo.</li>
+                        <li>Upravte jemnú farbu pozadia a zvýraznenie textu.</li>
+                    </ol>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Current Mode ('3-2-1', '4-3-2-1', 'baby-2-1', 'baby-3-2-1')
+        let currentMode = '3-2-1';
+        let autoAddMode = false;
+        let selectedCellKey = "0-0";
+
+        // Store cell state dynamically
+        let pyramidData = {};
+
+        // Define row configuration for modes
+        const modeConfigs = {
+            '3-2-1': { rows: 3, maxNum: 100 },
+            '4-3-2-1': { rows: 4, maxNum: 100 },
+            'baby-2-1': { rows: 2, maxNum: 20 },
+            'baby-3-2-1': { rows: 3, maxNum: 20 }
+        };
+
+        // Initialize state for the current mode
+        function initPyramidState() {
+            pyramidData = {};
+            const numRows = modeConfigs[currentMode].rows;
+            for (let r = 0; r < numRows; r++) {
+                const numCols = numRows - r;
+                for (let c = 0; c < numCols; c++) {
+                    pyramidData[`${r}-${c}`] = {
+                        value: "",
+                        bgColor: "white",
+                        isRedText: false,
+                        isBold: false
+                    };
+                }
+            }
+            selectedCellKey = "0-0";
+        }
+
+        // Render number selection grid based on active mode (0-100 or 0-20)
+        function renderNumberGrid() {
+            const gridContainer = document.getElementById('numberGrid');
+            gridContainer.innerHTML = '';
+            
+            const maxNum = modeConfigs[currentMode].maxNum;
+            document.getElementById('numberGridTitle').textContent = `Výber čísla (0 – ${maxNum})`;
+
+            for (let i = 1; i <= maxNum; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'num-btn';
+                btn.textContent = i;
+                btn.setAttribute('data-num', i);
+                btn.addEventListener('click', () => onNumberClick(i));
+                gridContainer.appendChild(btn);
+            }
+
+            // Click event for '0' button
+            const btn0 = document.querySelector('[data-num="0"]');
+            btn0.onclick = () => onNumberClick(0);
+        }
+
+        // Build Pyramid HTML DOM according to active mode
+        function renderPyramidDOM() {
+            const container = document.getElementById('pyramidContainer');
+            container.innerHTML = '';
+
+            const numRows = modeConfigs[currentMode].rows;
+
+            for (let r = 0; r < numRows; r++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-2 justify-center';
+
+                const numCols = numRows - r;
+                for (let c = 0; c < numCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'pyramid-cell rounded-lg';
+                    cell.setAttribute('data-row', r);
+                    cell.setAttribute('data-col', c);
+                    cell.addEventListener('click', () => selectCell(r, c));
+                    rowDiv.appendChild(cell);
+                }
+                container.appendChild(rowDiv);
+            }
+        }
+
+        // Change pyramid mode
+        function setPyramidMode(mode) {
+            currentMode = mode;
+
+            // Update mode buttons state
+            document.getElementById('btnMode3').classList.toggle('active', mode === '3-2-1');
+            document.getElementById('btnMode4').classList.toggle('active', mode === '4-3-2-1');
+            document.getElementById('btnModeBaby2').classList.toggle('active', mode === 'baby-2-1');
+            document.getElementById('btnModeBaby3').classList.toggle('active', mode === 'baby-3-2-1');
+
+            initPyramidState();
+            renderNumberGrid();
+            renderPyramidDOM();
+            updatePyramidUI();
+            updateControlsUI();
+        }
+
+        // Handle Cell selection
+        function selectCell(row, col) {
+            selectedCellKey = `${row}-${col}`;
+            updatePyramidUI();
+            updateControlsUI();
+        }
+
+        // Handle Number click from table
+        function onNumberClick(num) {
+            if (!selectedCellKey || !pyramidData[selectedCellKey]) return;
+            pyramidData[selectedCellKey].value = num;
+
+            if (autoAddMode) {
+                calculateAutoSum();
+            }
+
+            updatePyramidUI();
+        }
+
+        // Generic Auto-Sum calculation function for any size pyramid
+        function calculateAutoSum() {
+            const numRows = modeConfigs[currentMode].rows;
+
+            for (let r = 1; r < numRows; r++) {
+                const numCols = numRows - r;
+                for (let c = 0; c < numCols; c++) {
+                    const parent1Key = `${r - 1}-${c}`;
+                    const parent2Key = `${r - 1}-${c + 1}`;
+
+                    const val1 = parseInt(pyramidData[parent1Key]?.value);
+                    const val2 = parseInt(pyramidData[parent2Key]?.value);
+
+                    if (!isNaN(val1) && !isNaN(val2)) {
+                        pyramidData[`${r}-${c}`].value = val1 + val2;
+                    }
+                }
+            }
+        }
+
+        // Render Pyramid State to UI
+        function updatePyramidUI() {
+            const cells = document.querySelectorAll('.pyramid-cell');
+
+            cells.forEach(cell => {
+                const row = cell.getAttribute('data-row');
+                const col = cell.getAttribute('data-col');
+                const key = `${row}-${col}`;
+                const data = pyramidData[key];
+
+                if (!data) return;
+
+                // Set value content
+                cell.textContent = data.value !== "" ? data.value : "";
+
+                // Reset base class
+                cell.className = 'pyramid-cell rounded-lg';
+
+                // Highlight selected cell
+                if (key === selectedCellKey) {
+                    cell.classList.add('selected');
+                }
+
+                // Apply Background Color (50% opacity styling)
+                cell.classList.add(`bg-cell-${data.bgColor}`);
+
+                // Apply Text Color
+                if (data.isRedText) {
+                    cell.classList.add('text-cell-red');
+                } else {
+                    cell.classList.add('text-cell-normal');
+                }
+
+                // Apply Bold Font
+                if (data.isBold) {
+                    cell.classList.add('font-cell-bold');
+                }
+            });
+
+            // Update Info text
+            const infoElem = document.getElementById('selectedCellInfo');
+            if (selectedCellKey && pyramidData[selectedCellKey]) {
+                const [r, c] = selectedCellKey.split('-');
+                const rowNames = ["1. riadok (Vrchný)", "2. riadok", "3. riadok", "4. riadok"];
+                infoElem.innerHTML = `<i class="fa-solid fa-check-circle text-blue-600"></i> Označené: <b>${rowNames[r] || (parseInt(r)+1)+'. riadok'} (${parseInt(c)+1}. štvorec)</b>`;
+            } else {
+                infoElem.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Kliknite na políčko v pyramíde`;
+            }
+        }
+
+        // Update control panel active button states
+        function updateControlsUI() {
+            if (!selectedCellKey || !pyramidData[selectedCellKey]) {
+                document.querySelectorAll('.bg-color-btn').forEach(btn => {
+                    btn.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/80');
+                });
+                const btnRed = document.getElementById('btnTextRed');
+                if (btnRed) btnRed.classList.remove('bg-red-100', 'ring-2', 'ring-red-400');
+                const btnBold = document.getElementById('btnTextBold');
+                if (btnBold) btnBold.classList.remove('bg-slate-200', 'ring-2', 'ring-slate-400');
+                return;
+            }
+            const data = pyramidData[selectedCellKey];
+
+            // Update background color buttons highlight
+            document.querySelectorAll('.bg-color-btn').forEach(btn => {
+                const color = btn.getAttribute('data-color');
+                if (data.bgColor === color) {
+                    btn.classList.add('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/80');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-blue-500', 'border-blue-500', 'bg-blue-50/80');
+                }
+            });
+
+            // Update Red Text button
+            const btnRed = document.getElementById('btnTextRed');
+            if (data.isRedText) {
+                btnRed.classList.add('bg-red-100', 'ring-2', 'ring-red-400');
+            } else {
+                btnRed.classList.remove('bg-red-100', 'ring-2', 'ring-red-400');
+            }
+
+            // Update Bold Text button
+            const btnBold = document.getElementById('btnTextBold');
+            if (data.isBold) {
+                btnBold.classList.add('bg-slate-200', 'ring-2', 'ring-slate-400');
+            } else {
+                btnBold.classList.remove('bg-slate-200', 'ring-2', 'ring-slate-400');
+            }
+        }
+
+        // Initialize Event Listeners
+        function initEvents() {
+            // Clear Value Button
+            document.getElementById('btnClearValue').addEventListener('click', () => {
+                if (selectedCellKey && pyramidData[selectedCellKey]) {
+                    pyramidData[selectedCellKey].value = "";
+                    if (autoAddMode) calculateAutoSum();
+                    updatePyramidUI();
+                }
+            });
+
+            // Background Color Buttons
+            document.querySelectorAll('.bg-color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const color = btn.getAttribute('data-color');
+                    if (selectedCellKey && pyramidData[selectedCellKey]) {
+                        pyramidData[selectedCellKey].bgColor = color;
+                        updatePyramidUI();
+                        updateControlsUI();
+                    }
+                });
+            });
+
+            // Red Text Toggle Button
+            document.getElementById('btnTextRed').addEventListener('click', () => {
+                if (selectedCellKey && pyramidData[selectedCellKey]) {
+                    pyramidData[selectedCellKey].isRedText = !pyramidData[selectedCellKey].isRedText;
+                    updatePyramidUI();
+                    updateControlsUI();
+                }
+            });
+
+            // Bold Text Toggle Button
+            document.getElementById('btnTextBold').addEventListener('click', () => {
+                if (selectedCellKey && pyramidData[selectedCellKey]) {
+                    pyramidData[selectedCellKey].isBold = !pyramidData[selectedCellKey].isBold;
+                    updatePyramidUI();
+                    updateControlsUI();
+                }
+            });
+
+            // Auto Addition Toggle Switch
+            document.getElementById('autoAddToggle').addEventListener('change', (e) => {
+                autoAddMode = e.target.checked;
+                if (autoAddMode) {
+                    calculateAutoSum();
+                    updatePyramidUI();
+                }
+            });
+
+            // Reset Whole Pyramid Button
+            document.getElementById('btnResetPyramid').addEventListener('click', () => {
+                initPyramidState();
+                updatePyramidUI();
+                updateControlsUI();
+            });
+
+            // Click outside to deselect pyramid cell
+            document.addEventListener('click', (e) => {
+                const isInteractive = e.target.closest('.pyramid-cell, button, input, label, .num-btn, .bg-color-btn, .mode-btn');
+                if (!isInteractive) {
+                    selectedCellKey = null;
+                    updatePyramidUI();
+                    updateControlsUI();
+                }
+            });
+        }
+
+        // Window load initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initEvents();
+            setPyramidMode('3-2-1');
+        });
+    </script>
+</body>
+</html>
