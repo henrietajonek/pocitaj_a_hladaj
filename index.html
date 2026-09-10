@@ -1,4 +1,4 @@
-"<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
@@ -465,7 +465,7 @@
             const infoElem = document.getElementById('selectedCellInfo');
             if (selectedCellKey && pyramidData[selectedCellKey]) {
                 const [r, c] = selectedCellKey.split('-');
-                const rowNames = ["1. riadok (Vrchný)", "2. riadok", "3. riadok", "4. riadok"];
+                const rowNames = ["1. riadok", "2. riadok", "3. riadok", "4. riadok"];
                 infoElem.innerHTML = `<i class="fa-solid fa-check-circle text-blue-600"></i> Označené: <b>${rowNames[r] || (parseInt(r)+1)+'. riadok'} (${parseInt(c)+1}. štvorec)</b>`;
             } else {
                 infoElem.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Kliknite na políčko v pyramíde`;
